@@ -1,0 +1,20 @@
+name: gnn-bbbp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - rdkit
+  - pandas
+  - numpy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - jupyterlab
+  - ipykernel
+  - tqdm
+  - pyyaml
+  - pip
+  - pip:
+      - deepchem        # facilita o download do BBBP/B3DB e fornece scaffold split pronto
+      # torch e torch_geometric são instalados separadamente (ver README) por
+      # dependerem da sua configuração de hardware (CPU vs. CUDA)

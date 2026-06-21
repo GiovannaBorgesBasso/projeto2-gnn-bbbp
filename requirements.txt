@@ -1,0 +1,22 @@
+# Alternativa ao environment.yml para quem prefere pip puro / venv.
+# RDKit via pip requer Python 3.8+ (pacote 'rdkit', sem o sufixo '-pypi' das versões antigas).
+#
+# IMPORTANTE: instale torch ANTES deste arquivo, escolhendo o índice certo
+# para sua máquina (ver README.md, seção "Setup do Ambiente"), por exemplo:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+# Depois rode:
+#   pip install -r requirements.txt
+
+rdkit
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+jupyterlab
+ipykernel
+tqdm
+pyyaml
+deepchem
+torch_geometric

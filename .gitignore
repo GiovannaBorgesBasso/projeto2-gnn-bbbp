@@ -1,0 +1,48 @@
+# Dados (baixados/processados — não versionar, README explica como regenerar)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Modelos e checkpoints
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+*.pt
+*.pth
+*.ckpt
+
+# Resultados pesados (mantenha métricas pequenas versionadas se quiser)
+results/figures/*
+!results/figures/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.Python
+*.so
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Ambientes
+.venv/
+venv/
+env/
+.conda/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/
+
+# Logs / experiment tracking
+wandb/
+mlruns/
+*.log
