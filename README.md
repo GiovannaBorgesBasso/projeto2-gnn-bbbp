@@ -1,6 +1,6 @@
 # Projeto 2 — GNN para Predição de Permeabilidade da Barreira Hematoencefálica (BBBP)
 
-Segundo projeto de uma série de projetos pessoais em cheminformatics/ML, desenvolvidos em paralelo ao meu trabalho no LabMol (UFG), com foco em construir um portfólio sólido para atuação como AI Engineer na indústria farmacêutica.
+Segundo projeto de uma série de projetos pessoais em cheminformatics/ML, desenvolvidos em paralelo ao meu trabalho no LabMol (UFG), com foco em construir um portfólio sólido para atuação como AI Engineer.
 
 > **Projeto 1 (QSAR clássico):** [qsar-classico](https://github.com/GiovannaBorgesBasso/qsar-classico) — RDKit (ECFP4) + Random Forest/SVM para BTK (CHEMBL2842). AUC 0.95 (classificação), R² 0.74 (regressão).
 
