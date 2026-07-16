@@ -9,8 +9,8 @@ from rdkit import Chem
 import torch
 from torch_geometric.data import Data
 
-# Etanol: c1ccccc1-> C-C-O (3 átomos pesados, 2 ligações)
-smiles = "c1ccccc1"
+# Etanol: C-C-O (3 átomos pesados, 2 ligações)
+smiles = "CCO"
 mol = Chem.MolFromSmiles(smiles)
 
 print(f"SMILES: {smiles}")
