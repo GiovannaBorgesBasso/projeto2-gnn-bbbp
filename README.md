@@ -1,8 +1,10 @@
 # Projeto 2 — GNN para Predição de Permeabilidade da Barreira Hematoencefálica (BBBP)
 
-Segundo projeto de uma série de projetos pessoais em cheminformatics/ML, desenvolvidos em paralelo ao meu trabalho no LabMol (UFG), com foco em construir um portfólio sólido para atuação como AI Engineer.
+Segundo projeto de uma série de projetos pessoais em cheminformatics/ML, desenvolvidos em paralelo ao meu trabalho no LabMol (UFG), com foco em construir um portfólio sólido para atuação como AI Engineer na indústria farmacêutica.
 
 > **Projeto 1 (QSAR clássico):** [qsar-classico](https://github.com/GiovannaBorgesBasso/qsar-classico) — RDKit (ECFP4) + Random Forest/SVM para BTK (CHEMBL2842). AUC 0.95 (classificação), R² 0.74 (regressão).
+
+---
 
 ## 🎯 Visão Geral
 
@@ -10,24 +12,48 @@ Neste projeto, a molécula deixa de ser representada como um **vetor fixo** (fin
 
 A tarefa é classificação binária: a molécula atravessa a barreira hematoencefálica (BBB) ou não — uma propriedade farmacocinética crítica para fármacos de ação central (ex: antidepressivos, antipsicóticos) e igualmente crítica de **evitar** em fármacos periféricos (ex: para minimizar neurotoxicidade).
 
-## 🧠 Por que GNN, e por que comparar com o Projeto 1?
+---
+
+## 🧠 GNN vs. Baseline Clássico
 
 | | Projeto 1 (QSAR clássico) | Projeto 2 (GNN) |
 |---|---|---|
 | Representação | Fingerprint fixo (ECFP4, 2048 bits) | Grafo molecular (nós = átomos, arestas = ligações) |
-| Extração de features | Manual, definida a priori (algoritmo de hashing) | Aprendida pelo modelo durante o treino |
+| Extração de features | Manual, definida a priori | Aprendida pelo modelo durante o treino |
 | Modelo | Random Forest / SVM | GCN / GAT (PyTorch Geometric) |
-| Vantagem principal | Rápido, interpretável, robusto em datasets pequenos | Captura topologia molecular completa, sem perda por colisão de hash |
-| Risco principal | Perda de informação estrutural (colisões de hash, raio fixo) | Precisa de mais dados / regularização para não overfit |
+| Vantagem principal | Rápido, robusto em datasets pequenos | Captura topologia molecular completa |
+| Risco principal | Perda de informação por colisão de hash | Precisa de mais dados para superar fingerprints |
 
-O objetivo central deste projeto **não é "provar que GNN é melhor"** — é fazer a comparação honesta, no mesmo dataset e no mesmo split, e entender em que condições cada abordagem se sai melhor. Essa é uma pergunta real do dia a dia de um time de drug discovery.
+---
 
 ## 📊 Dataset
 
-- **Principal:** [MoleculeNet BBBP](https://moleculenet.org/) — ~2.050 moléculas, rótulo binário (BBB+/BBB-).
-- **Extensão opcional (fase posterior):** [B3DB](https://github.com/theochem/B3DB) — ~7.807 moléculas, dataset mais recente e mais balanceado, útil para testar se as conclusões se mantêm em escala maior.
+- **MoleculeNet BBBP** — 2.039 moléculas, rótulo binário (BBB+/BBB-)
+- **Desbalanceamento:** 76.5% BBB+ / 23.5% BBB-
+- **Tamanho médio:** mediana de 23 átomos pesados, peso molecular mediano de 324 Da
 
-> **Nota metodológica importante:** o BBBP é conhecido por ter um *scaffold split* mais informativo que um split aleatório (moléculas estruturalmente relacionadas tendem a ter o mesmo rótulo, então um split aleatório infla a performance). Vamos usar **scaffold split** como split principal, e reportar random split apenas como referência/diagnóstico — isso vale tanto para o baseline clássico re-treinado quanto para a GNN, para a comparação ser justa.
+---
+
+## 📈 Resultados Finais
+
+| Modelo | AUC-ROC (teste) |
+|---|---|
+| Random Forest + ECFP4 | 0.8420 |
+| **SVM + ECFP4** | **0.8564** |
+| GCN (grafos) | 0.8366 |
+| GAT (grafos) | 0.8419 |
+
+### Conclusão
+
+Os modelos clássicos (especialmente SVM) superaram as GNNs neste dataset. Esse resultado é **esperado e documentado na literatura** para o BBBP por dois motivos:
+
+1. **Dataset pequeno (~2.000 moléculas):** GNNs geralmente superam fingerprints a partir de ~10.000 moléculas. Com poucos dados, features cuidadosamente projetadas como ECFP4 são mais eficientes.
+
+2. **Natureza da tarefa:** permeabilidade na BBB é fortemente correlacionada com propriedades globais simples (lipofilia, doadores/aceptores de H-bond, peso molecular) — exatamente o que ECFP4 captura bem.
+
+A GAT (0.842) empatou com o Random Forest (0.842) e ficou apenas 1.4 pontos percentuais abaixo do SVM — não é uma derrota expressiva. GNNs são competitivas mesmo com poucos dados, mas não justificam a complexidade adicional nesse cenário específico. A vantagem das GNNs aparece com mais dados (ver Próximos Passos) ou com pré-treino em datasets maiores.
+
+---
 
 ## 🏗️ Estrutura do Repositório
 
@@ -35,97 +61,112 @@ O objetivo central deste projeto **não é "provar que GNN é melhor"** — é f
 projeto2-gnn-bbbp/
 ├── data/
 │   ├── raw/                  # dados originais baixados (não versionado)
-│   └── processed/            # dados processados / objetos PyG (não versionado)
-├── notebooks/                # exploração, uma etapa por notebook
+│   └── processed/            # dados processados (não versionado)
+├── notebooks/
+│   └── eda_bbbp.py           # análise exploratória do dataset
 ├── src/
-│   ├── data/                 # download, parsing SMILES, conversão mol→grafo
-│   ├── models/                # arquiteturas GCN, GAT
-│   ├── training/              # loops de treino, avaliação, métricas
-│   ├── baseline/               # baseline clássico (fingerprint + RF/SVM) no mesmo split
-│   └── utils/                  # splits, seeds, helpers gerais
+│   ├── data/
+│   │   ├── mol_to_graph.py   # SMILES → objeto Data do PyG
+│   │   └── dataset.py        # BBBPDataset (carrega 2039 moléculas)
+│   ├── models/
+│   │   ├── gcn.py            # arquitetura GCN
+│   │   └── gat.py            # arquitetura GAT
+│   ├── training/
+│   │   ├── train.py          # loop de treino da GCN
+│   │   └── train_gat.py      # loop de treino da GAT
+│   ├── baseline/
+│   │   └── classical.py      # RF + SVM + ECFP4 no mesmo split
+│   └── utils/
+│       ├── splits.py         # scaffold split estratificado
+│       └── plot_results.py   # visualizações finais
 ├── models/checkpoints/        # pesos salvos (não versionado)
 ├── results/
-│   ├── figures/                # gráficos finais
-│   └── metrics/                # tabelas de métricas (json/csv)
-├── reports/                    # relatório final de comparação
-├── tests/                      # testes unitários (ex: conversão SMILES→grafo)
+│   ├── figures/              # gráficos de comparação e curvas de treino
+│   └── metrics/              # métricas em JSON (baseline, GCN, GAT)
+├── reports/
+│   └── relatorio_final.md    # relatório completo com análise e conclusões
 ├── environment.yml
 ├── requirements.txt
 └── README.md
 ```
 
-`data/`, `models/checkpoints/` e artefatos grandes ficam fora do versionamento (ver `.gitignore`) — só o código e os notebooks (com outputs limpos ou leves) vão para o Git.
+---
 
 ## ⚙️ Setup do Ambiente
 
-PyTorch Geometric tem instalação sensível a hardware (CPU vs. GPU/CUDA), então o setup é em duas etapas: stack científica geral via conda, depois PyTorch/PyG via pip ajustado à sua máquina.
-
-### 1. Criar o ambiente base
-
 ```bash
-conda env create -f environment.yml
+conda create -n gnn-bbbp python=3.11 -y
 conda activate gnn-bbbp
+pip install rdkit torch torch_geometric deepchem matplotlib seaborn scikit-learn
 ```
 
-### 2. Instalar PyTorch (escolha conforme seu hardware)
+---
+
+## 🚀 Como Reproduzir
 
 ```bash
-# CPU apenas
-pip install torch --index-url https://download.pytorch.org/whl/cpu
+# 1. EDA
+python notebooks/eda_bbbp.py
 
-# OU GPU com CUDA 12.4 (exemplo — confira sua versão de CUDA com `nvidia-smi`)
-pip install torch --index-url https://download.pytorch.org/whl/cu124
+# 2. Baseline clássico
+python src/baseline/classical.py
+
+# 3. Treinar GCN
+python src/training/train.py
+
+# 4. Treinar GAT
+python src/training/train_gat.py
+
+# 5. Gerar visualizações finais
+python src/utils/plot_results.py
 ```
 
-### 3. Instalar PyTorch Geometric
-
-Desde a versão 2.3, o PyG funciona com instalação mínima (sem extensões compiladas):
-
-```bash
-pip install torch_geometric
-```
-
-### 4. Verificar a instalação
-
-```bash
-python -c "import torch, torch_geometric; print('torch:', torch.__version__); print('PyG:', torch_geometric.__version__); print('CUDA disponível:', torch.cuda.is_available())"
-```
-
-> Se aparecer algum erro de versão incompatível entre torch e PyG, confira a [tabela oficial de compatibilidade](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html) antes de tentar forçar instalação.
+---
 
 ## 🗺️ Roadmap
 
 - [x] **Etapa 0** — Setup do ambiente e estrutura do repositório
-- [ ] **Etapa 1** — Conceitos: grafos moleculares, message passing, `Data` objects do PyG
-- [ ] **Etapa 2** — EDA do dataset BBBP (distribuição de classes, tamanho molecular, scaffolds)
-- [ ] **Etapa 3** — Pipeline SMILES → grafo (features de nó/aresta, construção do `Dataset` PyG)
-- [ ] **Etapa 4** — Scaffold split + `DataLoader`, definição do protocolo de avaliação
-- [ ] **Etapa 5** — Baseline clássico (ECFP4 + RF/SVM) re-treinado no mesmo split, para comparação justa
-- [ ] **Etapa 6** — Implementação e treino de uma GCN
-- [ ] **Etapa 7** — Implementação e treino de uma GAT
-- [ ] **Etapa 8** — Comparação final (GCN vs. GAT vs. baseline clássico) + análise de erros
-- [ ] **Etapa 9** — (Opcional) Extensão para B3DB, validação de robustez em escala maior
-- [ ] **Etapa 10** — Documentação final, relatório e script de inferência em produção
+- [x] **Etapa 1** — Conceitos: grafos moleculares, message passing, objetos `Data` do PyG
+- [x] **Etapa 2** — EDA do dataset BBBP (distribuição de classes, tamanho molecular)
+- [x] **Etapa 3** — Pipeline SMILES → grafo (`mol_to_graph.py`, `BBBPDataset`)
+- [x] **Etapa 4** — Scaffold split estratificado + `DataLoader`
+- [x] **Etapa 5** — Baseline clássico (ECFP4 + RF/SVM) no mesmo split
+- [x] **Etapa 6** — GCN implementada e treinada (AUC teste: 0.8366)
+- [x] **Etapa 7** — GAT implementada e treinada (AUC teste: 0.8419)
+- [x] **Etapa 8** — Comparação final, relatório e visualizações
+- [ ] **Etapa 9** — (Próximo passo) Extensão para B3DB (~7.807 moléculas)
 
-## 📈 Resultados
+---
 
-_A preencher conforme o projeto avança._
+## 🔬 Decisões Metodológicas
 
-| Modelo | Split | AUC-ROC | Acurácia | F1 |
-|---|---|---|---|---|
-| RF + ECFP4 (baseline) | scaffold | — | — | — |
-| SVM + ECFP4 (baseline) | scaffold | — | — | — |
-| GCN | scaffold | — | — | — |
-| GAT | scaffold | — | — | — |
+**Por que scaffold split e não random split?**
+Moléculas estruturalmente parecidas tendem a ter o mesmo rótulo. Um split aleatório permite que variantes do mesmo scaffold caiam em treino e teste simultaneamente, inflando a performance artificialmente. O scaffold split garante que scaffolds inteiros fiquem em apenas um conjunto.
+
+**Por que scaffold split estratificado?**
+O scaffold split padrão do BBBP (ordenar grupos por tamanho, preencher treino primeiro) coloca todos os compostos BBB- no treino, deixando validação e teste com 0 compostos BBB- — tornando AUC-ROC indefinida. A versão estratificada distribui scaffolds por classe majoritária, garantindo ambas as classes em todos os conjuntos.
+
+**Por que AUC-ROC e não acurácia?**
+Com 76.5% BBB+, um modelo que sempre responde "BBB+" acerta 76% das vezes sem aprender nada. AUC-ROC mede a capacidade de separar as classes independentemente do desbalanceamento.
+
+---
+
+## 🔗 Próximos Passos
+
+- **B3DB (~7.807 moléculas):** replicar o pipeline num dataset maior para verificar se GNNs superam fingerprints com mais dados
+- **Pré-treino:** fine-tuning de modelos GNN pré-treinados em milhões de moléculas
+- **Otimização de hiperparâmetros:** grid search sobre hidden_channels, num_layers, dropout
+
+---
+
+## 📚 Referências
+
+- Martins et al. (2012). *A Bayesian Approach to in Silico Blood-Brain Barrier Penetration Modeling.*
+- Wu et al. (2018). *MoleculeNet: A Benchmark for Molecular Machine Learning.*
+- Kipf & Welling (2017). *Semi-Supervised Classification with Graph Convolutional Networks.*
+- Veličković et al. (2018). *Graph Attention Networks.*
+- Hu et al. (2020). *Strategies for Pre-Training Graph Neural Networks.*
 
 ## 🔗 Projetos Relacionados
 
 - [Projeto 1 — QSAR Clássico (BTK)](https://github.com/GiovannaBorgesBasso/qsar-classico)
-
-## 📚 Referências
-
-- Martins et al. (2012), *A Bayesian Approach to in Silico Blood-Brain Barrier Penetration Modeling* — fonte original do dataset BBBP.
-- Wu et al. (2018), *MoleculeNet: A Benchmark for Molecular Machine Learning*.
-- Kipf & Welling (2017), *Semi-Supervised Classification with Graph Convolutional Networks* (GCN).
-- Veličković et al. (2018), *Graph Attention Networks* (GAT).
-- Documentação oficial: [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/)
