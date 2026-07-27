@@ -1,0 +1,16 @@
+{
+  "baseline": [
+    {
+      "modelo": "Random Forest + ECFP4",
+      "auc_roc": 0.842,
+      "accuracy": 0.8092,
+      "f1": 0.8734
+    },
+    {
+      "modelo": "SVM + ECFP4",
+      "auc_roc": 0.8564,
+      "accuracy": 0.7961,
+      "f1": 0.8628
+    }
+  ]
+}

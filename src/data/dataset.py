@@ -9,7 +9,9 @@ Uso:
     from torch_geometric.loader import DataLoader
 
     dataset = BBBPDataset()
-    train, val, test = scaffold_split(dataset, dataset.smiles_list)
+    train, val, test = scaffold_split(
+        dataset, dataset.smiles_list, dataset.labels
+    )
 
     train_loader = DataLoader(train, batch_size=32, shuffle=True)
     val_loader   = DataLoader(val,   batch_size=32, shuffle=False)
@@ -39,8 +41,9 @@ class BBBPDataset:
         data.y          — rótulo binário: 1=BBB+, 0=BBB-
 
     Atributos públicos:
-        dataset.smiles_list  — lista de SMILES na mesma ordem que data_list.
-                               Necessário para o scaffold_split.
+        dataset.smiles_list — lista de SMILES na mesma ordem que data_list.
+        dataset.labels      — lista de rótulos (int) na mesma ordem.
+                              Ambos necessários para o scaffold_split.
 
     Args:
         url: URL ou caminho local do CSV do BBBP.
@@ -55,7 +58,8 @@ class BBBPDataset:
         df = df.reset_index(drop=True)
 
         self.data_list   = []
-        self.smiles_list = []   # exposto para uso no scaffold_split
+        self.smiles_list = []
+        self.labels      = []   # ← necessário para scaffold split estratificado
         invalidos = 0
 
         for _, row in df.iterrows():
@@ -63,6 +67,7 @@ class BBBPDataset:
             if graph is not None:
                 self.data_list.append(graph)
                 self.smiles_list.append(row['smiles'])
+                self.labels.append(int(row['label']))
             else:
                 invalidos += 1
 
